@@ -88,16 +88,60 @@ router.delete("/users/me", auth, async (req, res) => {
     res.status(500).send();
   }
 });
+router.get("/users/me/favorites", auth, async (req, res) => {
+  //   res.send(req.user);
+  // TODO
+});
+router.post("/users/me/favorites", auth, async (req, res) => {
+  //   add pet to favorite
+  // TODO
+});
+router.delete("/users/me/favorites", auth, async (req, res) => {
+  //   delete pet from favorite
+  // TODO
+});
 
-router.get("/users/me/favorite", auth, async (req, res) => {
-  //   res.send(req.user);
-  // TODO
-});
+// GET /users/me/pets?adopted=true
+// GET /users/me/pets?fostered=true
+// GET /pets?sortBy=createdAt:desc
+
+
 router.get("/users/me/pets", auth, async (req, res) => {
-  //adopted+foster
-  //   res.send(req.user);
-  // TODO
+  const match = {}
+  const sort = {}
+
+  if (req.query.adopted) {
+    if (req.query.adopted === 'true') {
+      match.status = "adopted"
+    }
+  }
+  if (req.query.fostered) {
+    if (req.query.fostered === 'true') {
+      match.status = "fostered"
+    }
+  }
+
+  if (req.query.sortBy) {
+    const parts = req.query.sortBy.split(':')
+    sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
+  }
+
+  try {
+    await req.user.populate({
+      path: 'pets',
+      match,
+      options: {
+        limit: parseInt(req.query.limit),
+        skip: parseInt(req.query.skip),
+        sort
+      }
+    }).execPopulate()
+    res.send(req.user.pets)
+  } catch (e) {
+    res.status(500).send()
+  }
 });
+
 
 const upload = multer({
   limits: {

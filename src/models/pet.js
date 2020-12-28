@@ -51,16 +51,6 @@ const petSchema = new mongoose.Schema(
 // userSchema.virtual("users", {
 //   ref: "user",
 //   localField: "_id",
-//   foreignField: "adopt",
-// });
-// userSchema.virtual("users", {
-//   ref: "user",
-//   localField: "_id",
-//   foreignField: "foster",
-// });
-// userSchema.virtual("users", {
-//   ref: "user",
-//   localField: "_id",
 //   foreignField: "favorites",
 // });
 
