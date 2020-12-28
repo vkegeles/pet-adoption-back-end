@@ -3,19 +3,10 @@ const validator = require("validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pet = require("./pet");
+require("dotenv").config();
 
 const userSchema = new mongoose.Schema(
   {
-    firstname: {
-      type: String,
-      required: false,
-      trim: true,
-    },
-    lastname: {
-      type: String,
-      required: false,
-      trim: true,
-    },
     email: {
       type: String,
       unique: true,
@@ -47,6 +38,9 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    firstname: String,
+    lastname: String,
+    phonenumber: String,
     avatar: {
       type: Buffer,
     },
@@ -81,7 +75,8 @@ userSchema.methods.toJSON = function () {
 
 userSchema.methods.generateAuthToken = async function () {
   const user = this;
-  const token = jwt.sign({ _id: user._id.toString() }, "mysupersecrettoken");
+  console.log(process.env.TOKEN);
+  const token = jwt.sign({ _id: user._id.toString() }, process.env.TOKEN);
   user.tokens = user.tokens.concat({ token });
   await user.save();
   return token;

@@ -5,7 +5,7 @@ const User = require("../models/user");
 const auth = require("../middleware/auth");
 const router = new express.Router();
 
-router.post("/users", async (req, res) => {
+router.post("/signup", async (req, res) => {
   console.log(req.body);
 
   const user = new User(req.body);
@@ -20,8 +20,9 @@ router.post("/users", async (req, res) => {
   }
 });
 
-router.post("/users/login", async (req, res) => {
+router.post("/login", async (req, res) => {
   try {
+    console.log(req.body);
     const user = await User.findByCredentials(
       req.body.email,
       req.body.password
@@ -33,7 +34,7 @@ router.post("/users/login", async (req, res) => {
   }
 });
 
-router.post("/users/logout", auth, async (req, res) => {
+router.post("/logout", auth, async (req, res) => {
   try {
     req.user.tokens = req.user.tokens.filter((token) => {
       return token.token !== req.token;
@@ -46,21 +47,11 @@ router.post("/users/logout", auth, async (req, res) => {
   }
 });
 
-router.post("/users/logoutAll", auth, async (req, res) => {
-  try {
-    req.user.tokens = [];
-    await req.user.save();
-    res.send();
-  } catch (e) {
-    res.status(500).send();
-  }
-});
-
-router.get("/users/me", auth, async (req, res) => {
+router.get("/user/me", auth, async (req, res) => {
   res.send(req.user);
 });
 
-router.patch("/users/me", auth, async (req, res) => {
+router.patch("/user/me", auth, async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "email", "password", "age"];
   const isValidOperation = updates.every((update) =>
@@ -80,7 +71,7 @@ router.patch("/users/me", auth, async (req, res) => {
   }
 });
 
-router.delete("/users/me", auth, async (req, res) => {
+router.delete("/user/me", auth, async (req, res) => {
   try {
     await req.user.remove();
     res.send(req.user);
@@ -88,60 +79,32 @@ router.delete("/users/me", auth, async (req, res) => {
     res.status(500).send();
   }
 });
-router.get("/users/me/favorites", auth, async (req, res) => {
+router.get("/user/me/pet/saved", auth, async (req, res) => {
   //   res.send(req.user);
   // TODO
 });
-router.post("/users/me/favorites", auth, async (req, res) => {
-  //   add pet to favorite
-  // TODO
-});
-router.delete("/users/me/favorites", auth, async (req, res) => {
-  //   delete pet from favorite
-  // TODO
-});
 
-// GET /users/me/pets?adopted=true
-// GET /users/me/pets?fostered=true
-// GET /pets?sortBy=createdAt:desc
-
-
-router.get("/users/me/pets", auth, async (req, res) => {
-  const match = {}
-  const sort = {}
-
-  if (req.query.adopted) {
-    if (req.query.adopted === 'true') {
-      match.status = "adopted"
-    }
-  }
-  if (req.query.fostered) {
-    if (req.query.fostered === 'true') {
-      match.status = "fostered"
-    }
-  }
-
-  if (req.query.sortBy) {
-    const parts = req.query.sortBy.split(':')
-    sort[parts[0]] = parts[1] === 'desc' ? -1 : 1
-  }
+router.get("/user/me/pet/owned", auth, async (req, res) => {
+  const match = {};
+  const sort = {};
 
   try {
-    await req.user.populate({
-      path: 'pets',
-      match,
-      options: {
-        limit: parseInt(req.query.limit),
-        skip: parseInt(req.query.skip),
-        sort
-      }
-    }).execPopulate()
-    res.send(req.user.pets)
+    await req.user
+      .populate({
+        path: "pets",
+        match,
+        options: {
+          limit: parseInt(req.query.limit),
+          skip: parseInt(req.query.skip),
+          sort,
+        },
+      })
+      .execPopulate();
+    res.send(req.user.pets);
   } catch (e) {
-    res.status(500).send()
+    res.status(500).send();
   }
 });
-
 
 const upload = multer({
   limits: {
@@ -157,7 +120,7 @@ const upload = multer({
 });
 
 router.post(
-  "/users/me/avatar",
+  "/user/me/avatar",
   auth,
   upload.single("avatar"),
   async (req, res) => {
@@ -174,13 +137,13 @@ router.post(
   }
 );
 
-router.delete("/users/me/avatar", auth, async (req, res) => {
+router.delete("/user/me/avatar", auth, async (req, res) => {
   req.user.avatar = undefined;
   await req.user.save();
   res.send();
 });
 
-router.get("/users/:id/avatar", async (req, res) => {
+router.get("/user/:id/avatar", async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
 

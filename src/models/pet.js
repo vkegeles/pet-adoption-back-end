@@ -32,11 +32,11 @@ const petSchema = new mongoose.Schema(
       trim: true,
     },
     picture: String,
-    height: String,
-    weight: String,
+    height: Number,
+    weight: Number,
     color: String,
     bio: String,
-    diet: String,
+    dietaryrestrictions: String,
 
     hypoallergenic: {
       type: Boolean,
