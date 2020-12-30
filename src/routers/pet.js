@@ -29,24 +29,25 @@ router.get("/pet", auth, async (req, res) => {
   const sort = {};
   const allowedStatuses = new Set(["adopted", "fostered", "available"]); //TODO put to model
 
-  if (req.query.status && allowedStatuses.has(req.query.status)) {
-    match.status = req.query.status;
-  }
-  if (req.query.type) {
-    match.type = req.query.type;
-  }
-  if (req.query.name) {
-    match.name = req.query.name;
-  }
+  // if (req.query.status && allowedStatuses.has(req.query.status)) {
+  //   match.status = req.query.status;
+  // }
+  // if (req.query.type) {
+  //   match.type = req.query.type;
+  // }
+  // if (req.query.name) {
+  //   match.name = req.query.name;
+  // }
 
   try {
-    const pets = await MyModel.find(match, null, {
+    const pets = await Pet.find(match, null, {
       limit: parseInt(req.query.limit),
       skip: parseInt(req.query.skip),
       sort,
     });
+    console.log(pets);
 
-    res.send(pets);
+    res.status(200).send(pets);
   } catch (e) {
     res.status(500).send();
   }
@@ -110,7 +111,7 @@ router.put("/pet/:id", auth, async (req, res) => {
       }
     });
     await pet.save();
-    res.send(pet);
+    res.status(200).send(pet);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -139,7 +140,7 @@ router.post("/pet/:id/adopt", auth, async (req, res) => {
     }
     pet.owner = req.user._id;
     await pet.save();
-    res.send(pet);
+    res.status(200).send(pet);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -156,7 +157,7 @@ router.post("/pet/:id/return", auth, async (req, res) => {
     pet.status = "availiable";
     pet.owner = null;
     await pet.save();
-    res.send(pet);
+    res.status(200).send(pet);
   } catch (e) {
     res.status(400).send(e);
   }
@@ -172,7 +173,7 @@ router.delete("/pet/:id", auth, async (req, res) => {
       res.status(404).send();
     }
 
-    res.send(pet);
+    res.status(200).send(pet);
   } catch (e) {
     res.status(500).send();
   }
