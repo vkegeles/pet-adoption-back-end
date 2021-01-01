@@ -1,10 +1,10 @@
 const express = require("express");
 const Pet = require("../models/pet");
-const auth = require("../middleware/auth");
+const { auth, isAdmin } = require("../middleware/auth");
 const router = new express.Router();
 
 //TODO only for admin
-router.post("/pet", auth, async (req, res) => {
+router.post("/pet", isAdmin, async (req, res) => {
   const pet = new Pet({
     ...req.body,
   });
@@ -24,7 +24,7 @@ router.post("/pet", auth, async (req, res) => {
 // GET /pet?sortBy=createdAt:desc
 // //delete auth here
 //TODO global search
-router.get("/pet", auth, async (req, res) => {
+router.get("/pet", async (req, res) => {
   const match = {};
   const sort = {};
   const allowedStatuses = new Set(["adopted", "fostered", "available"]); //TODO put to model
@@ -45,7 +45,7 @@ router.get("/pet", auth, async (req, res) => {
       skip: parseInt(req.query.skip),
       sort,
     });
-    console.log(pets);
+    // console.log(pets);
 
     res.status(200).send(pets);
   } catch (e) {
@@ -53,24 +53,27 @@ router.get("/pet", auth, async (req, res) => {
   }
 });
 
-router.get("/pet/:id", auth, async (req, res) => {
+router.get("/pet/:id", async (req, res) => {
   const _id = req.params.id;
+  console.log(_id);
 
   try {
-    const pet = await pet.findOne({ _id });
+    const pet = await Pet.findOne({ _id });
 
     if (!pet) {
       return res.status(404).send();
     }
+    console.log(pet);
 
     res.send(pet);
   } catch (e) {
-    res.status(500).send();
+    console.log(e);
+
+    res.status(500).send(e);
   }
 });
 
-//TODO only for admin
-router.put("/pet/:id", auth, async (req, res) => {
+router.put("/pet/:id", isAdmin, async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = [
     "name",
@@ -163,21 +166,21 @@ router.post("/pet/:id/return", auth, async (req, res) => {
   }
 });
 
-router.delete("/pet/:id", auth, async (req, res) => {
-  try {
-    const pet = await pet.findOneAndDelete({
-      _id: req.params.id,
-    });
+// router.delete("/pet/:id", isAdmin, async (req, res) => {
+//   try {
+//     const pet = await pet.findOneAndDelete({
+//       _id: req.params.id,
+//     });
 
-    if (!pet) {
-      res.status(404).send();
-    }
+//     if (!pet) {
+//       res.status(404).send();
+//     }
 
-    res.status(200).send(pet);
-  } catch (e) {
-    res.status(500).send();
-  }
-});
+//     res.status(200).send(pet);
+//   } catch (e) {
+//     res.status(500).send();
+//   }
+// });
 
 router.post("/pet/:id/save", auth, async (req, res) => {
   //   add pet to favorite

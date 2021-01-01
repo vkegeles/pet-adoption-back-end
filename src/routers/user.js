@@ -2,20 +2,26 @@ const express = require("express");
 const multer = require("multer");
 const sharp = require("sharp");
 const User = require("../models/user");
-const auth = require("../middleware/auth");
+const { auth, isAdmin } = require("../middleware/auth");
 const router = new express.Router();
+const USER_STATUS = 1;
+
 
 router.post("/signup", async (req, res) => {
-  console.log(req.body);
+  console.log("body", req.body);
 
   const user = new User(req.body);
-  console.log(user);
+  console.log("user", user);
+  user.status = USER_STATUS;
 
   try {
     await user.save();
     const token = await user.generateAuthToken();
+    console.log("token", token);
+
     res.status(201).send({ user, token });
   } catch (e) {
+    console.log(e);
     res.status(400).send(e);
   }
 });
@@ -71,7 +77,7 @@ router.patch("/user/me", auth, async (req, res) => {
   }
 });
 
-router.delete("/user/me", auth, async (req, res) => {
+router.delete("/user/me", isAdmin, async (req, res) => {
   try {
     await req.user.remove();
     res.send(req.user);
