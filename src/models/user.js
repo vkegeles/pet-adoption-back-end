@@ -42,9 +42,6 @@ const userSchema = new mongoose.Schema(
     firstname: String,
     lastname: String,
     phonenumber: String,
-    avatar: {
-      type: Buffer,
-    },
     favorites: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -69,8 +66,6 @@ userSchema.methods.toJSON = function () {
   const userObject = user.toObject();
   delete userObject.password;
   delete userObject.tokens;
-  delete userObject.avatar;
-
   return userObject;
 };
 
@@ -100,13 +95,6 @@ userSchema.pre("save", async function (next) {
   if (user.isModified("password")) {
     user.password = await bcrypt.hash(user.password, 8);
   }
-  next();
-});
-
-// Delete adopted pets when user is removed
-userSchema.pre("remove", async function (next) {
-  const user = this;
-  await pet.deleteMany({ owner: user._id, status: "adopted" });
   next();
 });
 

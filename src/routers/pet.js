@@ -3,7 +3,6 @@ const Pet = require("../models/pet");
 const { auth, isAdmin } = require("../middleware/auth");
 const router = new express.Router();
 
-//TODO only for admin
 router.post("/pet", isAdmin, async (req, res) => {
   const pet = new Pet({
     ...req.body,
@@ -27,7 +26,7 @@ router.post("/pet", isAdmin, async (req, res) => {
 router.get("/pet", async (req, res) => {
   const match = {};
   const sort = {};
-  const allowedStatuses = new Set(["adopted", "fostered", "available"]); //TODO put to model
+  const allowedStatuses = new Set(["adopted", "fostered", "available"]);
 
   // if (req.query.status && allowedStatuses.has(req.query.status)) {
   //   match.status = req.query.status;
@@ -40,11 +39,15 @@ router.get("/pet", async (req, res) => {
   // }
 
   try {
-    const pets = await Pet.find(match, null, {
-      limit: parseInt(req.query.limit),
-      skip: parseInt(req.query.skip),
-      sort,
-    });
+    const pets = await Pet.find(
+      match,
+      ["name", "type", "gender", "status", "picture"],
+      {
+        limit: parseInt(req.query.limit),
+        skip: parseInt(req.query.skip),
+        sort,
+      }
+    );
     // console.log(pets);
 
     res.status(200).send(pets);
@@ -75,6 +78,7 @@ router.get("/pet/:id", async (req, res) => {
 
 router.put("/pet/:id", isAdmin, async (req, res) => {
   const updates = Object.keys(req.body);
+  console.log("updates", updates);
   const allowedUpdates = [
     "name",
     "type",
@@ -98,7 +102,7 @@ router.put("/pet/:id", isAdmin, async (req, res) => {
   }
 
   try {
-    const pet = await pet.findOne({ _id: req.params.id });
+    const pet = await Pet.findOne({ _id: req.params.id });
 
     if (!pet) {
       return res.status(404).send();
@@ -121,17 +125,20 @@ router.put("/pet/:id", isAdmin, async (req, res) => {
 });
 
 router.post("/pet/:id/adopt", auth, async (req, res) => {
-  const updates = Object.keys(req.body);
+  const updates = req.body;
+  console.log(updates);
+  console.log(updates.type);
+
   const allowedTypes = new Set(["adopt", "foster"]);
   if (!updates.type) {
     return res.status(400).send({ error: "Invalid parameter!" });
   }
-  if (!allowedTypes.has(update)) {
+  if (!allowedTypes.has(updates.type)) {
     return res.status(400).send({ error: "Invalid adopt type!" });
   }
 
   try {
-    const pet = await pet.findOne({ _id: req.params.id });
+    const pet = await Pet.findOne({ _id: req.params.id });
 
     if (!pet) {
       return res.status(404).send();
@@ -150,14 +157,13 @@ router.post("/pet/:id/adopt", auth, async (req, res) => {
 });
 
 router.post("/pet/:id/return", auth, async (req, res) => {
-  const updates = Object.keys(req.body);
   try {
-    const pet = await pet.findOne({ _id: req.params.id });
+    const pet = await Pet.findOne({ _id: req.params.id });
 
     if (!pet) {
       return res.status(404).send();
     }
-    pet.status = "availiable";
+    pet.status = "available";
     pet.owner = null;
     await pet.save();
     res.status(200).send(pet);
@@ -166,9 +172,23 @@ router.post("/pet/:id/return", auth, async (req, res) => {
   }
 });
 
+router.get("/pet/user/:id", async (req, res) => {
+  // match.owner = req.param.id;
+  console.log(req.params.id);
+
+  try {
+    const pets = await Pet.find({ owner: req.params.id });
+    // console.log(pets);
+
+    res.status(200).send(pets);
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
 // router.delete("/pet/:id", isAdmin, async (req, res) => {
 //   try {
-//     const pet = await pet.findOneAndDelete({
+//     const pet = await Pet.findOneAndDelete({
 //       _id: req.params.id,
 //     });
 
@@ -181,14 +201,5 @@ router.post("/pet/:id/return", auth, async (req, res) => {
 //     res.status(500).send();
 //   }
 // });
-
-router.post("/pet/:id/save", auth, async (req, res) => {
-  //   add pet to favorite
-  // TODO
-});
-router.delete("/pet/:id/save", auth, async (req, res) => {
-  //   delete pet from favorite
-  // TODO
-});
 
 module.exports = router;

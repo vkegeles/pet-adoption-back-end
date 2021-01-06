@@ -6,7 +6,6 @@ const { auth, isAdmin } = require("../middleware/auth");
 const router = new express.Router();
 const USER_STATUS = 1;
 
-
 router.post("/signup", async (req, res) => {
   console.log("body", req.body);
 
@@ -53,6 +52,23 @@ router.post("/logout", auth, async (req, res) => {
   }
 });
 
+router.get("/user", isAdmin, async (req, res) => {
+  const match = {};
+  const sort = {};
+  try {
+    const users = await User.find(match, null, {
+      limit: parseInt(req.query.limit),
+      skip: parseInt(req.query.skip),
+      sort,
+    });
+    console.log(users);
+
+    res.status(200).send(users);
+  } catch (e) {
+    res.status(500).send();
+  }
+});
+
 router.get("/user/me", auth, async (req, res) => {
   res.send(req.user);
 });
@@ -85,31 +101,29 @@ router.delete("/user/me", isAdmin, async (req, res) => {
     res.status(500).send();
   }
 });
-router.get("/user/me/pet/saved", auth, async (req, res) => {
-  //   res.send(req.user);
-  // TODO
+
+router.post("/user/me/pet/:id/save", auth, async (req, res) => {
+  const user = await User.findById(req.user._id);
+  console.log(user);
+  user.favorites.push(req.params.id);
+  await user.save();
+  res.send(user);
 });
-
-router.get("/user/me/pet/owned", auth, async (req, res) => {
-  const match = {};
-  const sort = {};
-
-  try {
-    await req.user
-      .populate({
-        path: "pets",
-        match,
-        options: {
-          limit: parseInt(req.query.limit),
-          skip: parseInt(req.query.skip),
-          sort,
-        },
-      })
-      .execPopulate();
-    res.send(req.user.pets);
-  } catch (e) {
-    res.status(500).send();
-  }
+router.delete("/user/me/pet/:id/save", auth, async (req, res) => {
+  const user = await User.findById(req.user._id);
+  console.log(user);
+  user.favorites.pull(req.params.id);
+  await user.save();
+  res.send(user);
+});
+router.get("/user/me/pet/saved", auth, async (req, res) => {
+  User.findById(req.user._id)
+    .populate("favorites")
+    .exec(function (err, user) {
+      if (err) return handleError(err);
+      user.favorites.map((pet) => console.log(pet));
+      res.send(user.favorites);
+    });
 });
 
 const upload = multer({
@@ -123,45 +137,6 @@ const upload = multer({
 
     cb(undefined, true);
   },
-});
-
-router.post(
-  "/user/me/avatar",
-  auth,
-  upload.single("avatar"),
-  async (req, res) => {
-    const buffer = await sharp(req.file.buffer)
-      .resize({ width: 250, height: 250 })
-      .png()
-      .toBuffer();
-    req.user.avatar = buffer;
-    await req.user.save();
-    res.send();
-  },
-  (error, req, res, next) => {
-    res.status(400).send({ error: error.message });
-  }
-);
-
-router.delete("/user/me/avatar", auth, async (req, res) => {
-  req.user.avatar = undefined;
-  await req.user.save();
-  res.send();
-});
-
-router.get("/user/:id/avatar", async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-
-    if (!user || !user.avatar) {
-      throw new Error();
-    }
-
-    res.set("Content-Type", "image/png");
-    res.send(user.avatar);
-  } catch (e) {
-    res.status(404).send();
-  }
 });
 
 module.exports = router;
