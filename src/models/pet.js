@@ -48,11 +48,7 @@ const petSchema = new mongoose.Schema(
   }
 );
 
-// userSchema.virtual("users", {
-//   ref: "user",
-//   localField: "_id",
-//   foreignField: "favorites",
-// });
+petSchema.index({ name: "text", type: "text", gender: "text", status: "text" });
 
 const pet = mongoose.model("Pet", petSchema);
 

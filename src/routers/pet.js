@@ -17,23 +17,29 @@ router.post("/pet", isAdmin, async (req, res) => {
 });
 
 // GET /pet?status=available
-// GET /pet?type=cat&name=Bill
+// GET /pet?type=Cat&name=Bill
 //TODO height weight
 // GET /pet?limit=10&skip=20
 // GET /pet?sortBy=createdAt:desc
 // //delete auth here
 //TODO global search
 router.get("/pet", async (req, res) => {
-  const match = {};
+  let match = {};
   const sort = {};
+
+  console.log("search2", req.query);
+  console.log("search3", req.query.search);
+  if (req.query.search) {
+    match = { $text: { $search: req.query.search } };
+  }
   const allowedStatuses = new Set(["adopted", "fostered", "available"]);
 
-  // if (req.query.status && allowedStatuses.has(req.query.status)) {
-  //   match.status = req.query.status;
-  // }
-  // if (req.query.type) {
-  //   match.type = req.query.type;
-  // }
+  if (req.query.status && allowedStatuses.has(req.query.status)) {
+    match.status = req.query.status;
+  }
+  if (req.query.type) {
+    match.type = req.query.type;
+  }
   // if (req.query.name) {
   //   match.name = req.query.name;
   // }
@@ -103,18 +109,15 @@ router.put("/pet/:id", isAdmin, async (req, res) => {
 
   try {
     const pet = await Pet.findOne({ _id: req.params.id });
-
+    console.log("pet", pet);
     if (!pet) {
       return res.status(404).send();
     }
 
     updates.forEach((update) => {
       pet[update] = req.body[update];
-      if (
-        update == "status" &&
-        (pet[update] === "fostered" || pet[update] === "adopted")
-      ) {
-        pet.owner = req.user._id;
+      if (update == "status" && pet[update] === "available") {
+        pet.owner = null;
       }
     });
     await pet.save();
