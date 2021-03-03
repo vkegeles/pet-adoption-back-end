@@ -20,8 +20,11 @@ router.post("/signup", async (req, res) => {
 
     res.status(201).send({ user, token });
   } catch (e) {
-    console.log(e);
-    res.status(400).send(e);
+    if (e.code === 11000) {
+      res.status(400).send("Email used by another account");
+    } else {
+      res.status(400).send(e.message);
+    }
   }
 });
 
@@ -35,7 +38,7 @@ router.post("/login", async (req, res) => {
     const token = await user.generateAuthToken();
     res.send({ user, token });
   } catch (e) {
-    res.status(400).send();
+    res.status(400).send("Incorrect email or password");
   }
 });
 
@@ -46,9 +49,9 @@ router.post("/logout", auth, async (req, res) => {
     });
     await req.user.save();
 
-    res.send();
+    res.status(201).send();
   } catch (e) {
-    res.status(500).send();
+    res.status(500).send(e);
   }
 });
 
@@ -70,7 +73,7 @@ router.get("/user", isAdmin, async (req, res) => {
 });
 
 router.get("/user/me", auth, async (req, res) => {
-  res.send(req.user);
+  res.status(201).send(req.user);
 });
 
 router.patch("/user/me", auth, async (req, res) => {
