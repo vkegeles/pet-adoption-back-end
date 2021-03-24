@@ -7,23 +7,21 @@ const isAdmin = async (req, res, next) => {
   try {
     const token = req.header("Authorization").replace("Bearer ", "");
 
-    const user = await verifyToken(token)
+    const user = await verifyToken(token);
     if (!user) {
       throw new Error();
     }
     if (user.status === ADMIN_STATUS) {
-      next()
+      next();
     } else {
-      res.status(403).send({ error: ' User hasn`t access' })
+      res.status(403).send({ error: " User hasn`t access" });
     }
   } catch (e) {
     res.status(401).send({ error: "Please authenticate." });
   }
-}
+};
 
 const auth = async (req, res, next) => {
-  // console.log(req.data);
-
   try {
     const token = req.header("Authorization").replace("Bearer ", "");
     const user = await verifyToken(token);
@@ -47,12 +45,10 @@ const verifyToken = async (token) => {
       _id: decoded._id,
       "tokens.token": token,
     });
-    // console.log(user);
     return user;
   } catch (err) {
     return null;
   }
-}
+};
 
 module.exports = { auth, isAdmin };
-

@@ -7,16 +7,12 @@ const router = new express.Router();
 const USER_STATUS = 1;
 
 router.post("/signup", async (req, res) => {
-  console.log("body", req.body);
-
   const user = new User(req.body);
-  console.log("user", user);
   user.status = USER_STATUS;
 
   try {
     await user.save();
     const token = await user.generateAuthToken();
-    console.log("token", token);
 
     res.status(201).send({ user, token });
   } catch (e) {
@@ -30,7 +26,6 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    console.log(req.body);
     const user = await User.findByCredentials(
       req.body.email,
       req.body.password
@@ -64,7 +59,6 @@ router.get("/user", isAdmin, async (req, res) => {
       skip: parseInt(req.query.skip),
       sort,
     });
-    console.log(users);
 
     res.status(200).send(users);
   } catch (e) {
@@ -113,14 +107,12 @@ router.delete("/user/me", isAdmin, async (req, res) => {
 
 router.post("/user/me/pet/:id/save", auth, async (req, res) => {
   const user = await User.findById(req.user._id);
-  console.log(user);
   user.favorites.push(req.params.id);
   await user.save();
   res.send(user);
 });
 router.delete("/user/me/pet/:id/save", auth, async (req, res) => {
   const user = await User.findById(req.user._id);
-  console.log(user);
   user.favorites.pull(req.params.id);
   await user.save();
   res.send(user);

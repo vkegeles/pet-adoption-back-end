@@ -27,8 +27,6 @@ router.get("/pet", async (req, res) => {
   let match = {};
   const sort = {};
 
-  console.log("search2", req.query);
-  console.log("search3", req.query.search);
   if (req.query.search) {
     match = { $text: { $search: req.query.search } };
   }
@@ -54,7 +52,6 @@ router.get("/pet", async (req, res) => {
         sort,
       }
     );
-    // console.log(pets);
 
     res.status(200).send(pets);
   } catch (e) {
@@ -64,7 +61,6 @@ router.get("/pet", async (req, res) => {
 
 router.get("/pet/:id", async (req, res) => {
   const _id = req.params.id;
-  console.log(_id);
 
   try {
     const pet = await Pet.findOne({ _id });
@@ -72,7 +68,6 @@ router.get("/pet/:id", async (req, res) => {
     if (!pet) {
       return res.status(404).send();
     }
-    console.log(pet);
 
     res.send(pet);
   } catch (e) {
@@ -84,7 +79,6 @@ router.get("/pet/:id", async (req, res) => {
 
 router.put("/pet/:id", isAdmin, async (req, res) => {
   const updates = Object.keys(req.body);
-  console.log("updates", updates);
   const allowedUpdates = [
     "name",
     "type",
@@ -109,7 +103,6 @@ router.put("/pet/:id", isAdmin, async (req, res) => {
 
   try {
     const pet = await Pet.findOne({ _id: req.params.id });
-    console.log("pet", pet);
     if (!pet) {
       return res.status(404).send();
     }
@@ -129,9 +122,6 @@ router.put("/pet/:id", isAdmin, async (req, res) => {
 
 router.post("/pet/:id/adopt", auth, async (req, res) => {
   const updates = req.body;
-  console.log(updates);
-  console.log(updates.type);
-
   const allowedTypes = new Set(["adopt", "foster"]);
   if (!updates.type) {
     return res.status(400).send({ error: "Invalid parameter!" });
@@ -176,12 +166,8 @@ router.post("/pet/:id/return", auth, async (req, res) => {
 });
 
 router.get("/pet/user/:id", async (req, res) => {
-  // match.owner = req.param.id;
-  console.log(req.params.id);
-
   try {
     const pets = await Pet.find({ owner: req.params.id });
-    // console.log(pets);
 
     res.status(200).send(pets);
   } catch (e) {
